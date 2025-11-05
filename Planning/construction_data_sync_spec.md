@@ -1019,6 +1019,119 @@ def bridgit_write_forecasted_assignments(context, bridgit_api_client):
 | _source_system | VARCHAR(20) | sage300 | - | Metadata |
 | _ingested_at | TIMESTAMP | Ingestion timestamp | - | Metadata |
 
+#### fact_rfis
+**Grain:** One row per RFI per project
+
+| Column | Type | Description | Measure Type | Source |
+|--------|------|-------------|--------------|--------|
+| rfi_sk | BIGSERIAL | Surrogate key (primary key) | - | Generated |
+| project_fk | BIGINT | Foreign key to dim_project | - | Procore |
+| rfi_number | VARCHAR(50) | RFI identifier | - | Procore |
+| subject | VARCHAR(255) | RFI subject/title | - | Procore |
+| question | TEXT | Question text | - | Procore |
+| status | VARCHAR(50) | Open/Closed/Draft/etc. | - | Procore |
+| created_date | DATE | RFI created date | - | Procore |
+| due_date | DATE | Response due date | - | Procore |
+| response_date | DATE | Date response submitted | - | Procore |
+| days_open | INTEGER | Days between created and closed | Additive | Calculated |
+| responsible_party_fk | BIGINT | Linked reviewer/assignee (dim_person) | - | Procore |
+| cost_impact_flag | BOOLEAN | Indicates potential cost impact | - | Procore |
+| schedule_impact_flag | BOOLEAN | Indicates potential schedule impact | - | Procore |
+| attachments_count | INTEGER | Number of attachments | Additive | Procore |
+| reopened_count | INTEGER | Number of times reopened | Additive | Procore |
+| _source_system | VARCHAR(20) | procore | - | Metadata |
+| _ingested_at | TIMESTAMP | Ingestion timestamp | - | Metadata |
+
+#### fact_submittals
+**Grain:** One row per submittal record per revision
+
+| Column | Type | Description | Measure Type | Source |
+|--------|------|-------------|--------------|--------|
+| submittal_sk | BIGSERIAL | Surrogate key (primary key) | - | Generated |
+| project_fk | BIGINT | Foreign key to dim_project | - | Procore |
+| submittal_number | VARCHAR(50) | Submittal identifier | - | Procore |
+| revision_number | INTEGER | Revision sequence | - | Procore |
+| spec_section | VARCHAR(100) | Specification section | - | Procore |
+| status | VARCHAR(50) | Draft/Pending/Approved/Returned | - | Procore |
+| submitted_date | DATE | Date submitted | - | Procore |
+| required_approval_date | DATE | Required approval date | - | Procore |
+| actual_approval_date | DATE | Date approved/returned | - | Procore |
+| turnaround_days | INTEGER | Days from submission to decision | Additive | Calculated |
+| reviewer_fk | BIGINT | Reviewer (dim_person or dim_client contact) | - | Procore |
+| is_overdue | BOOLEAN | Flag if past required approval date | - | Calculated |
+| attachments_count | INTEGER | Number of attachments | Additive | Procore |
+| revision_notes | TEXT | Reviewer comments | - | Procore |
+| _source_system | VARCHAR(20) | procore | - | Metadata |
+| _ingested_at | TIMESTAMP | Ingestion timestamp | - | Metadata |
+
+#### fact_daily_logs
+**Grain:** One row per project, per log date, per trade entry
+
+| Column | Type | Description | Measure Type | Source |
+|--------|------|-------------|--------------|--------|
+| daily_log_sk | BIGSERIAL | Surrogate key (primary key) | - | Generated |
+| project_fk | BIGINT | Foreign key to dim_project | - | Procore |
+| date_fk | INTEGER | Foreign key to dim_date | - | Procore |
+| trade_name | VARCHAR(100) | Trade/crew name | - | Procore |
+| headcount | INTEGER | Workers onsite for trade | Additive | Procore |
+| hours_worked | DECIMAL(8,2) | Total hours for trade | Additive | Procore |
+| equipment_used | TEXT | Equipment summary | - | Procore |
+| weather_summary | VARCHAR(255) | Weather notes (per log) | - | Procore |
+| temperature_high | DECIMAL(5,2) | Recorded high temp (°F) | - | Procore |
+| temperature_low | DECIMAL(5,2) | Recorded low temp (°F) | - | Procore |
+| delays_flag | BOOLEAN | Indicates delays/issues reported | - | Procore |
+| safety_incidents | INTEGER | Count of incidents noted | Additive | Procore |
+| notes | TEXT | General notes | - | Procore |
+| _source_system | VARCHAR(20) | procore | - | Metadata |
+| _ingested_at | TIMESTAMP | Ingestion timestamp | - | Metadata |
+
+#### fact_observations
+**Grain:** One row per observation issue
+
+| Column | Type | Description | Measure Type | Source |
+|--------|------|-------------|--------------|--------|
+| observation_sk | BIGSERIAL | Surrogate key (primary key) | - | Generated |
+| project_fk | BIGINT | Foreign key to dim_project | - | Procore |
+| observation_id | VARCHAR(50) | Observation identifier | - | Procore |
+| observation_type | VARCHAR(50) | Safety/Quality/Progress/etc. | - | Procore |
+| priority | VARCHAR(20) | Low/Medium/High/Critical | - | Procore |
+| status | VARCHAR(50) | Open/Closed/Overdue | - | Procore |
+| created_date | DATE | Observation created date | - | Procore |
+| due_date | DATE | Target resolution date | - | Procore |
+| closed_date | DATE | Actual resolution date | - | Procore |
+| days_open | INTEGER | Days from created to closed | Additive | Calculated |
+| assigned_to_fk | BIGINT | Assigned person/team (dim_person) | - | Procore |
+| location | VARCHAR(255) | Location on site | - | Procore |
+| photos_count | INTEGER | Attached photo count | Additive | Procore |
+| corrective_action | TEXT | Resolution notes | - | Procore |
+| _source_system | VARCHAR(20) | procore | - | Metadata |
+| _ingested_at | TIMESTAMP | Ingestion timestamp | - | Metadata |
+
+#### fact_schedule_activities
+**Grain:** One row per schedule activity per reporting date
+
+| Column | Type | Description | Measure Type | Source |
+|--------|------|-------------|--------------|--------|
+| schedule_activity_sk | BIGSERIAL | Surrogate key (primary key) | - | Generated |
+| project_fk | BIGINT | Foreign key to dim_project | - | Procore/MS Project |
+| schedule_id | VARCHAR(50) | Activity identifier | - | Procore/MS Project |
+| activity_name | VARCHAR(255) | Activity/task name | - | Procore/MS Project |
+| wbs_code | VARCHAR(100) | Work breakdown structure code | - | Procore/MS Project |
+| baseline_start_date | DATE | Baseline start | - | Procore/MS Project |
+| baseline_finish_date | DATE | Baseline finish | - | Procore/MS Project |
+| planned_start_date | DATE | Current planned start | - | Procore/MS Project |
+| planned_finish_date | DATE | Current planned finish | - | Procore/MS Project |
+| actual_start_date | DATE | Actual start date | - | Procore/MS Project |
+| actual_finish_date | DATE | Actual finish date | - | Procore/MS Project |
+| percent_complete | DECIMAL(5,2) | % complete (0-100) | Semi-additive | Procore/MS Project |
+| critical_path_flag | BOOLEAN | Indicates critical path activity | - | Procore/MS Project |
+| total_float_days | INTEGER | Total float/slack in days | Additive | Procore/MS Project |
+| reporting_date | DATE | Snapshot date (for S-curve) | - | Procore/MS Project |
+| cumulative_planned_value | DECIMAL(15,2) | Cumulative planned value | Additive | Calculated |
+| cumulative_actual_value | DECIMAL(15,2) | Cumulative actual value | Additive | Calculated |
+| _source_system | VARCHAR(20) | procore/msproject | - | Metadata |
+| _ingested_at | TIMESTAMP | Ingestion timestamp | - | Metadata |
+
 ## Data Quality & Governance
 - Great Expectations test suites:
   - Row count thresholds.
@@ -1110,4 +1223,3 @@ def bridgit_write_forecasted_assignments(context, bridgit_api_client):
 **Version:** 2.0
 **Date:** November 2025
 **Last Updated:** November 4, 2025
-
