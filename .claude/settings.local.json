@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(for file in .claude/agents/*.md)",
+      "Bash(head:*)",
+      "Bash(done)",
+      "Bash(awk:*)",
+      "Bash(dir /a)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
