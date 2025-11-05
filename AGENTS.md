@@ -35,3 +35,10 @@
 
 ## Agent-Specific Instructions
 - Prefer `rg` for search, read files in ≤ 250‑line chunks, and keep patches minimal and scoped. Respect existing structure and naming.
+
+## Parallel Agent Workflow (Git Worktrees)
+- Keep `master` pristine: sync with `git fetch origin` and `git pull --ff-only origin master` before creating new worktrees.
+- Create isolated sandboxes per agent/task: `git worktree add worktrees/<agent>/<topic> -b agent/<agent>/<topic> master`.
+- Work, stage, and commit inside that worktree directory; push with `git push -u origin agent/<agent>/<topic>`.
+- When merged, clean up via `git worktree remove worktrees/<agent>/<topic>` followed by `git branch -d agent/<agent>/<topic>`; prune stale with `git worktree prune` weekly.
+- Store worktrees under `worktrees/` (ignored) to avoid polluting repo root and to run multiple agents in parallel without checkout conflicts.
