@@ -1141,12 +1141,27 @@ def bridgit_write_forecasted_assignments(context, bridgit_api_client):
 - dbt tests and contracts defined in `schema.yml`.
 
 ## Orchestration Workflow
-1. Airbyte runs ingestion (incremental).
-2. Great Expectations validates Bronze layer.
-3. dbt transforms → Silver → Gold.
-4. Post-transform GE checks.
-5. Load into Metabase.
-6. Emit success/failure metrics to monitoring.
+Dagster orchestrates all batch and reverse-sync assets. Assets are grouped to mirror the medallion architecture and reverse flows while keeping lineage explicit.
+
+### Asset Groups & Dependencies
+1. **ingestion_raw** – Dagster assets trigger Airbyte syncs (Smartsheet, Sage 300, Procore, Bridgit Bench). Each asset returns metadata (row counts, sync duration) for monitoring.
+2. **validation_bronze** – Great Expectations assets validate raw tables (freshness, row-count deltas, schema drift). Depend on `ingestion_raw` assets.
+3. **transform_dbt_silver_gold** – dbt asset materializations execute stage/intermediate/mart models using `dagster-dbt`. Downstream assets fan out by domain (`estimating_marts`, `operations_marts`, `field_marts`, `resource_marts`).
+4. **validation_gold** – Great Expectations suites on curated marts (business logic checks, anomaly detection). Block downstream if failures occur.
+5. **reverse_sync** – Dagster Python assets that compute forecasts and call Bridgit Bench APIs. Depend on `validation_gold` outputs and skip if upstream validations failed.
+6. **metadata_catalog** – OpenMetadata ingestion asset refreshes lineage, tags, and descriptions after successful transformations.
+
+### Schedules & Sensors
+- `daily_refresh` schedule at 04:30 local: materializes full dependency chain (`ingestion_raw → validation_gold → metadata_catalog`). SLA ensures dashboards ready by 09:00.
+- `reverse_sync_morning` schedule at 09:05: materializes `reverse_sync` asset group after confirming previous run success.
+- `bridgit_award_sensor`: sensor listens for new rows in `bridge_estimate_to_project` with status `pending_sync` to trigger on-demand reverse sync.
+- `manual_reprocess_sensor`: triggered by flag table or Dagster UI to rerun individual asset subsets when source reruns are required.
+
+### Resources & Configuration
+- Shared resources defined in `dagster.yaml`: PostgreSQL warehouse (SQLAlchemy), Airbyte client, dbt CLI profile, Great Expectations context, HTTP clients (Procore, Bridgit, Smartsheet).
+- Run coordinator enforces max parallel asset materializations (default 6) to respect API rate limits; critical assets (reverse sync) run in singleton queue.
+- Asset job definitions include tagging (`source:smartsheet`, `layer:gold`) for observability dashboards.
+- Failure policies: automatic retries (3 attempts, exponential backoff) for transient connector/API errors; persistent failures raise Slack/Teams alerts through Dagster alert hooks.
 
 ## Deployment
 ### Local (Docker Compose)
