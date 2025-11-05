@@ -1186,6 +1186,48 @@ Dagster orchestrates all batch and reverse-sync assets. Assets are grouped to mi
 - Metrics: Prometheus → Grafana.
 - Alerts: Failing tests, missing data, job duration anomalies.
 
+## Implementation Roadmap (12–16 Weeks)
+
+### Phase 0 – Foundations (Week 1)
+- Stand up shared infrastructure: repo structure, Dagster instance, Airbyte, dbt profiles, GE context, Metabase.
+- Configure CI pipeline for linting/tests; enable branch protections.
+- Exit criteria: baseline stack runs locally via Docker Compose; health checks green.
+
+### Phase 1 – Source Ingestion & Bronze Layer (Weeks 2–4)
+- Implement Airbyte (or custom) connectors for Smartsheet, Sage 300 (ODBC + CSV fallback), Procore, Bridgit Bench.
+- Materialize Bronze schemas with ingestion metadata columns and freshness monitoring.
+- Add GE freshness/row-count checks; set up Dagster schedules `daily_refresh` skeleton.
+- Exit criteria: Incremental loads succeed for all sources; Bronze validations ≥95% pass rate.
+
+### Phase 2 – Silver Models & Matching (Weeks 4–7)
+- Build dbt staging + normalized models; implement job/person matching logic and bridge tables.
+- Enrich dim tables (Type 2 SCD where required) and produce Silver facts for estimating, financials, field, resource domains.
+- Expand GE suites for referential integrity; wire lineage to OpenMetadata.
+- Exit criteria: Silver models cover all entities; job conversion logic validated against sample projects.
+
+### Phase 3 – Gold Layer, Analytics & Reverse Sync (Weeks 7–11)
+- Develop Gold marts for dashboards (estimating, operations, field, leadership) plus schedule health and forecasted assignments.
+- Implement reverse-sync Dagster assets; add safeguards (manual override, audit logging, rate limiting).
+- Configure Metabase dashboards + RBAC; run user acceptance with estimators/PMs.
+- Exit criteria: Gold layer passes business-rule tests; reverse sync writes forecast assignments in test environment; dashboards deliver agreed KPIs.
+
+### Phase 4 – Hardening, Performance & Launch (Weeks 11–14)
+- Load-test pipelines, tune warehouse indexes, validate HA/failover runbooks.
+- Complete security review (OAuth2 flows, API keys, audit logs) and DR exercises (backup/restore, failover).
+- Migrate Docker Compose workloads to Kubernetes via Helm; finalize monitoring dashboards and alert routing.
+- Exit criteria: SLA metrics achieved (data ready by 09:00, uptime 99.5%); stakeholders sign off on go-live checklist.
+
+### Phase 5 – Cutover & Post-Go-Live (Weeks 14–16)
+- Execute production go-live, monitor first full refresh cycles, and resolve defects via hypercare war room.
+- Transfer knowledge to operations team; finalize documentation (runbooks, dashboard guides).
+- Plan backlog for Phase 2 enhancements (additional sources, automation, self-service APIs).
+- Exit criteria: Hypercare closed; ownership transitioned to steady-state support; backlog prioritized.
+
+### Cross-Cutting Activities
+- **Testing cadence:** Unit (Python/dbt), GE, end-to-end pipeline dry runs at each phase gate.
+- **Change control:** Weekly review with sponsor; maintain RACI alignment and update RAID log.
+- **Resource plan:** 1 Senior Data Engineer (lead), optional support from Data Analyst (2–4 hrs/week) for UAT and metric validation.
+
 ## Future Source Onboarding Template
 1. Define connection & auth details.
 2. Add Airbyte connector or custom Python module.
