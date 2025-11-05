@@ -648,6 +648,59 @@ def bridgit_write_forecasted_assignments(context, bridgit_api_client):
 - **Invalid Project/Person ID:** Log to error table, alert data steward to fix mapping
 - **Duplicate Assignment:** Skip and log (idempotency)
 
+## Timeline Business Rules & Automations
+
+### Bid-to-Award Tracking
+- **Objective:** Measure time from initial bid exposure to operations kickoff for each YY-4-### → YY-1-### conversion.
+- **Source Fields:** `smartsheet.bid_due_date`, `smartsheet.status_last_updated`, `bridge_estimate_to_project.mapped_at`, `sage300.project_start_date`.
+- **Logic:**
+  - `bid_to_award_days = DATE(mapped_at) - DATE(bid_due_date)`.
+  - `award_to_start_days = DATE(project_start_date) - DATE(mapped_at)`.
+  - Maintain rolling 3-month averages per owner, estimator, and market type; classify results (Fast Track ≤14 days, Typical 15–30, Extended >30).
+- **Automation:** Gold table `gold_bid_conversion_metrics` refreshed daily. Dagster sensor raises advisory alert if `bid_to_award_days` exceeds 45 days with status still “Post Pending”.
+
+### Buyout Duration
+- **Objective:** Track procurement lead time between award and construction mobilization.
+- **Source Fields:** `sage300.project_status_date` (mobilization), `bridge_estimate_to_project.mapped_at`, network folder timestamps when Sage record absent.
+- **Logic:**
+  - `buyout_days = COALESCE(project_status_date, folder_detected_date) - DATE(mapped_at)`.
+  - Compare against historical median buyout duration segmented by project size category (Small < $1M, Medium $1–5M, Large > $5M).
+- **Automation:** Flag projects where `buyout_days` drifts ±25% from segment median for two consecutive refreshes; surface in Operations dashboard.
+
+### RFI Response KPI
+- **Objective:** Monitor responsiveness for field questions.
+- **Source Fields:** `procore_rfis.created_date`, `due_date`, `response_date`, `status`.
+- **Logic:**
+  - `response_cycle_days = COALESCE(response_date, CURRENT_DATE) - created_date`.
+  - Compute averages by reviewer (architect, consultant) and project type; track % RFIs answered before due date.
+- **Automation:** Send weekly digest to PMs listing reviewers with average response time > historical average + 2 days. Reverse sync uses metric to annotate Bridgit forecasts when schedule risk increases.
+
+### Submittal Approval Cycle
+- **Objective:** Ensure material/equipment approvals stay on schedule.
+- **Source Fields:** `procore_submittals.submitted_date`, `required_approval_date`, `actual_approval_date`, `status`.
+- **Logic:**
+  - `approval_cycle_days = COALESCE(actual_approval_date, CURRENT_DATE) - submitted_date`.
+  - `on_time = actual_approval_date <= required_approval_date`.
+  - Generate leading indicators by spec section and reviewer; highlight sections with on-time rate < 80%.
+- **Automation:** Dagster asset writes variance records to `gold_submittal_performance`. If on-time rate drops for critical packages (HVAC, electrical), trigger Slack alert to project engineer distribution list.
+
+### Smartsheet Backfill & Forecast Updates
+- **Objective:** Keep estimating sheet aligned with actual award/start dates and forecasted manpower.
+- **Automation Steps:**
+  1. When `gold_bid_conversion_metrics` shows confirmed award, update Smartsheet fields via API: set “Post Pending” to “Awarded” and populate `Actual Award Date`, `Forecasted Start`, `Forecasted Finish`.
+  2. If a project start slips more than 14 days vs. forecast, back-write new start date and append note referencing Sage job number.
+  3. Use historical averages to refresh `Pipeline Probability` when award timeline exceeds thresholds (e.g., drop to 15% if >60 days with no decision).
+- **Governance:** All Smartsheet writes logged to `audit_smartsheet_updates` with before/after values; manual overrides by estimators set `lock_flag` to skip automation.
+
+### Reporting Deliverables
+- **Gold Models:** `gold_bid_conversion_metrics`, `gold_buyout_performance`, `gold_rfi_cycle_time`, `gold_submittal_performance` feed dashboards.
+- **Alerts:**
+  - Bid aging > 45 days without award decision.
+  - Buyout duration variance > ±25% from baseline.
+  - RFI average response > 7 days or <60% on-time.
+  - Submittal on-time performance <80% for critical spec sections.
+- **Dashboards:** Timeline KPIs appear on Estimating, Operations, and Field views with trend charts and percentile benchmarks.
+
 ## Stakeholders & Roles
 
 ### Project Stakeholders

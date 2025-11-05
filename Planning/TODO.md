@@ -4,7 +4,7 @@
 1. [x] Flesh out Procore fact table schemas (`fact_rfis`, `fact_submittals`, `fact_daily_logs`, `fact_observations`, `fact_schedule_activities`) with grain, measures, foreign keys.
 2. [x] Replace Celery references with Dagster specifics in the orchestration section; outline asset groups, schedules, and configuration.
 3. [x] Draft implementation roadmap covering MVP → full rollout, 12-16 week timeline, resources, testing gates.
-4. [ ] Document timeline business rules (bid-to-award, buyout, RFI response, submittal cycle) and automation backfills (Smartsheet updates).
+4. [x] Document timeline business rules (bid-to-award, buyout, RFI response, submittal cycle) and automation backfills (Smartsheet updates).
 5. [ ] Produce cost estimate (infrastructure, tooling, personnel) for implementation phase.
 
 ## Medium Priority
