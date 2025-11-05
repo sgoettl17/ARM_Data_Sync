@@ -1281,6 +1281,39 @@ Dagster orchestrates all batch and reverse-sync assets. Assets are grouped to mi
 - **Change control:** Weekly review with sponsor; maintain RACI alignment and update RAID log.
 - **Resource plan:** 1 Senior Data Engineer (lead), optional support from Data Analyst (2–4 hrs/week) for UAT and metric validation.
 
+## Cost Estimate (Phase 1 Delivery)
+
+### Infrastructure (Monthly)
+- **Azure/AWS Compute & Storage:** ~$1,650
+  - Warehouse: 2 × `Standard_D8s_v5` Postgres nodes (primary + hot standby) → ~$900
+  - Airbyte/Dagster/dbt/GE pods (K8s): worker nodes ~4 vCPU/16 GB → ~$450
+  - Storage (Postgres disks + S3/Blob archival 2 TB) → ~$200
+  - Network egress and ancillary services (Load balancer, Prometheus/Grafana) → ~$100
+- **Kubernetes Control Plane:** If using managed AKS/EKS, ~$75 flat.
+
+### Tooling & Licenses (Monthly)
+- Open-source stack (Airbyte, Dagster, dbt Core, GE, Metabase) → $0 license cost.
+- Optional upgrades:
+  - dbt Cloud Team (for IDE/jobs) → $100 per seat (1–2 seats optional).
+  - Metabase Pro (if embedding/security features needed) → $85.
+  - OpenMetadata managed services (optional) → assume self-hosted ($0).
+- Reserve $200/month contingency for premium connectors or API rate-limit upgrades (Procore, Smartsheet).
+
+### Personnel (One-Time for Implementation)
+- **Senior Data Engineer:** 0.75 FTE for 16 weeks → ~480 hours @ $120/hr = **$57,600**.
+- **Data Analyst/BI Specialist:** 0.2 FTE for 6 weeks (dashboard validation) → ~48 hours @ $80/hr = **$3,840**.
+- **DevOps support (optional):** 0.1 FTE for infrastructure automation (~40 hours @ $110/hr) = **$4,400**.
+- **Total labor estimate:** **$65k**–**$72k** depending on DevOps involvement.
+
+### Ongoing Operations (Post Go-Live)
+- **Run costs:** ~$1.9k/month infrastructure + optional $200 tooling = ~$2.1k/month baseline.
+- **Support:** 0.1 FTE data engineer (4 hours/week) for monitoring, enhancements (~$2k/month) + on-call rotation coverage.
+- **Sustainment budget:** Plan for ~$4k/month to cover cloud spend, minor enhancements, and support overhead.
+
+### Contingency & Risk Buffer
+- 15% contingency on labor and infrastructure to accommodate scope adjustments → add ~$10k one-time, ~$300/month ongoing.
+- Budget approvals should target **$85k** total for implementation (inclusive contingency) and **$4.3k/month** recurring spend.
+
 ## Future Source Onboarding Template
 1. Define connection & auth details.
 2. Add Airbyte connector or custom Python module.

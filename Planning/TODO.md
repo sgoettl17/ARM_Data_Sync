@@ -5,7 +5,7 @@
 2. [x] Replace Celery references with Dagster specifics in the orchestration section; outline asset groups, schedules, and configuration.
 3. [x] Draft implementation roadmap covering MVP → full rollout, 12-16 week timeline, resources, testing gates.
 4. [x] Document timeline business rules (bid-to-award, buyout, RFI response, submittal cycle) and automation backfills (Smartsheet updates).
-5. [ ] Produce cost estimate (infrastructure, tooling, personnel) for implementation phase.
+5. [x] Produce cost estimate (infrastructure, tooling, personnel) for implementation phase.
 
 ## Medium Priority
 6. [ ] Build comprehensive data dictionary with field-level definitions and example values.
