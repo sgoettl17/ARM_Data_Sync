@@ -42,3 +42,4 @@
 - Work, stage, and commit inside that worktree directory; push with `git push -u origin agent/<agent>/<topic>`.
 - When merged, clean up via `git worktree remove worktrees/<agent>/<topic>` followed by `git branch -d agent/<agent>/<topic>`; prune stale with `git worktree prune` weekly.
 - Store worktrees under `worktrees/` (ignored) to avoid polluting repo root and to run multiple agents in parallel without checkout conflicts.
+- Shortcut: `pwsh scripts/new-worktree.ps1 -Agent <name> -Topic <slug>` performs the fetch/pull, adds the worktree and opens a new terminal; pass `-SkipPull` for advanced scenarios.
